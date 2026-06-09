@@ -1,37 +1,424 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 AI Knowledge Base Assistant (RAG Platform)
 
-## Getting Started
+A production-grade Retrieval-Augmented Generation (RAG) platform built with TypeScript that allows users to upload documents, search knowledge bases, and interact with an AI assistant grounded in their own data.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 🎯 Project Goal
+
+Build a modern AI-powered knowledge assistant that can:
+
+- Upload and process documents (PDF, DOCX, Markdown)
+- Create embeddings and store them in a vector database
+- Retrieve relevant information using semantic search
+- Generate accurate answers with citations
+- Support conversational chat with memory
+- Provide enterprise-style document collections
+- Expose analytics and retrieval insights
+- Demonstrate production-ready RAG architecture
+
+This project is intended to:
+
+- Learn LangChain deeply
+- Learn LangGraph workflows
+- Learn Vector Databases
+- Learn Retrieval-Augmented Generation
+- Learn AI Application Architecture
+- Build a portfolio-worthy project
+- Showcase skills to AI/Backend employers
+
+---
+
+# 🏗️ High-Level Architecture
+
+```text
+Frontend (Next.js)
+        │
+        ▼
+API Layer
+        │
+        ▼
+LangGraph Workflow
+        │
+ ┌──────┼────────┐
+ ▼      ▼        ▼
+LLM  Retriever  Memory
+ │      │
+ ▼      ▼
+Gemini/Qwen  Qdrant
+        │
+        ▼
+Document Chunks
+        │
+        ▼
+Uploaded Files
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# 🛠️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Frontend
 
-## Learn More
+- Next.js 15
+- TypeScript
+- TailwindCSS
+- shadcn/ui
+- React Query
+- Zustand
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Backend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Next.js Route Handlers
+- TypeScript
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## AI Layer
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# ai-knowledge-base-assistant
+- LangChain
+- LangGraph
+
+---
+
+## LLM Provider
+
+Initial:
+
+- Gemini 2.5 Flash
+
+Future:
+
+- OpenAI
+- Anthropic
+- Ollama (local)
+
+---
+
+## Embeddings
+
+Initial:
+
+- Gemini Embeddings
+
+Future:
+
+- OpenAI text-embedding-3-small
+- BGE Models
+
+---
+
+## Vector Database
+
+- Qdrant
+
+---
+
+## Relational Database
+
+- PostgreSQL
+
+---
+
+## ORM
+
+- Prisma
+
+---
+
+## File Storage
+
+Development:
+
+- Local Storage
+
+Production:
+
+- Cloudflare R2
+
+---
+
+## Authentication
+
+- Better Auth
+
+---
+
+## Deployment
+
+Frontend:
+
+- Vercel
+
+Backend:
+
+- Railway
+
+Database:
+
+- Neon
+
+Vector DB:
+
+- Qdrant Cloud
+
+Storage:
+
+- Cloudflare R2
+
+---
+
+# 📚 Core Concepts To Learn
+
+This project will cover:
+
+- Chunking Strategies
+- Embeddings
+- Semantic Search
+- Hybrid Search
+- Metadata Filtering
+- RAG Pipelines
+- Context Windows
+- Prompt Engineering
+- Tool Calling
+- LangGraph State Management
+- Conversational Memory
+- Retrieval Evaluation
+- AI Observability
+
+---
+
+# 🗂️ Features
+
+## Phase 1 — MVP
+
+### Authentication
+
+- [ ] User Signup
+- [ ] User Login
+- [ ] Session Management
+
+### Document Upload
+
+- [ ] Upload PDF
+- [ ] Upload DOCX
+- [ ] Upload Markdown Files
+
+### Processing Pipeline
+
+- [ ] Extract Text
+- [ ] Chunk Documents
+- [ ] Generate Embeddings
+- [ ] Store Vectors
+
+### Chat
+
+- [ ] Ask Questions
+- [ ] Retrieve Relevant Chunks
+- [ ] Generate AI Response
+- [ ] Display Citations
+
+---
+
+# 🚀 Phase 2 — Better Retrieval
+
+### Retrieval Improvements
+
+- [ ] Metadata Filtering
+- [ ] Similarity Search
+- [ ] MMR Search
+- [ ] Hybrid Search
+
+### Document Management
+
+- [ ] Document List
+- [ ] Delete Documents
+- [ ] Re-index Documents
+
+### Collections
+
+- [ ] Create Collection
+- [ ] Assign Documents
+- [ ] Query Collection
+
+---
+
+# 🧠 Phase 3 — Conversational RAG
+
+### Chat Memory
+
+- [ ] Conversation History
+- [ ] Context Preservation
+- [ ] Follow-Up Questions
+
+### LangGraph
+
+- [ ] Retrieval Node
+- [ ] Reranking Node
+- [ ] Generation Node
+- [ ] Citation Node
+
+---
+
+# 📈 Phase 4 — Observability
+
+### Analytics Dashboard
+
+- [ ] Total Documents
+- [ ] Total Chunks
+- [ ] Query Count
+- [ ] Token Usage
+
+### Retrieval Insights
+
+- [ ] Retrieved Chunks
+- [ ] Similarity Scores
+- [ ] Response Sources
+
+---
+
+# ⚡ Phase 5 — Enterprise Features
+
+### Advanced Search
+
+- [ ] Hybrid Retrieval
+- [ ] Query Rewriting
+- [ ] Multi-Query Retrieval
+
+### Security
+
+- [ ] Role-Based Access
+- [ ] Collection Permissions
+
+### File Handling
+
+- [ ] Large File Uploads
+- [ ] Background Processing
+
+---
+
+# 🤖 Phase 6 — Agentic RAG
+
+### Research Mode
+
+- [ ] Question Analysis
+- [ ] Retrieval Planning
+- [ ] Multi-Step Search
+- [ ] Evidence Verification
+
+### LangGraph Workflow
+
+```text
+Question
+   │
+   ▼
+Analyze
+   │
+   ▼
+Retrieve
+   │
+   ▼
+Rerank
+   │
+   ▼
+Verify
+   │
+   ▼
+Generate
+   │
+   ▼
+Citations
+```
+
+---
+
+# 📂 Planned Folder Structure
+
+```text
+src/
+│
+├── app/
+│
+├── components/
+│
+├── features/
+│   ├── auth/
+│   ├── documents/
+│   ├── chat/
+│   ├── collections/
+│   └── analytics/
+│
+├── lib/
+│   ├── langchain/
+│   ├── langgraph/
+│   ├── qdrant/
+│   ├── prisma/
+│   └── embeddings/
+│
+├── server/
+│
+├── hooks/
+│
+└── types/
+```
+
+---
+
+# 🧪 Stretch Goals
+
+## Multi-Modal RAG
+
+- [ ] Image Extraction
+- [ ] OCR
+- [ ] Image Question Answering
+
+## Local AI
+
+- [ ] Ollama Integration
+- [ ] Local Embeddings
+
+## Evaluation
+
+- [ ] RAGAS Evaluation
+- [ ] Hallucination Detection
+- [ ] Faithfulness Score
+
+## Monitoring
+
+- [ ] LangSmith Integration
+- [ ] OpenTelemetry
+
+---
+
+# 📊 Resume Value
+
+After completing this project, I should be able to confidently discuss:
+
+- RAG Architecture
+- Embedding Models
+- Vector Databases
+- LangChain
+- LangGraph
+- Semantic Search
+- Hybrid Retrieval
+- Prompt Engineering
+- AI System Design
+- Production AI Applications
+- Scaling Knowledge Systems
+
+---
+
+# 🎯 Final Deliverable
+
+A production-ready AI Knowledge Assistant capable of:
+
+- Managing large document collections
+- Semantic retrieval across thousands of chunks
+- Conversational question answering
+- Citation-based responses
+- Retrieval observability
+- Enterprise-style architecture
+
+This project should be strong enough to showcase on GitHub, portfolio websites, technical blogs, and AI engineering interviews.
