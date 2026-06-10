@@ -196,9 +196,9 @@ This project will cover:
 
 ### Authentication
 
-- [ ] User Signup
-- [ ] User Login
-- [ ] Session Management
+- [x] User Signup
+- [x] User Login
+- [x] Session Management
 
 ### Document Upload
 
