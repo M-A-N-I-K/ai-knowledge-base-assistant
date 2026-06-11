@@ -7,6 +7,7 @@ import {
   SignOutButton,
   GetStartedButton,
 } from "@/app/components/ClientButtons";
+import { LogoWithText } from "@/app/components/Logo";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -15,37 +16,15 @@ export default async function Home() {
 
   return (
     <div className="relative min-h-screen bg-zinc-950 text-zinc-100 overflow-hidden selection:bg-violet-500/30 selection:text-white">
-      {/* Background radial glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-violet-900/15 via-cyan-900/5 to-transparent blur-3xl pointer-events-none" />
       <div className="absolute top-[800px] -left-20 w-[400px] h-[400px] rounded-full bg-violet-600/5 blur-3xl pointer-events-none" />
       <div className="absolute top-[1200px] -right-20 w-[500px] h-[500px] rounded-full bg-cyan-600/5 blur-3xl pointer-events-none" />
 
-      {/* Grid Pattern overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293706_1px,transparent_1px),linear-gradient(to_bottom,#1f293706_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
-      {/* Navigation Header */}
       <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-zinc-950/70 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 flex items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 p-2 text-white shadow-md shadow-violet-500/10">
-              <svg
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-                className="w-full h-full"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
-            </div>
-            <span className="font-bold tracking-tight text-white text-lg">
-              AI Knowledge Base
-            </span>
-          </div>
+          <LogoWithText />
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
             <Link
@@ -55,26 +34,22 @@ export default async function Home() {
               Features
             </Link>
             <Link
-              href="#preview"
-              className="hover:text-white transition-colors"
+              href="/upload"
+              className="hover:text-white transition-colors text-violet-400 font-semibold"
             >
-              Workspace
-            </Link>
-            <Link
-              href="#workflow"
-              className="hover:text-white transition-colors"
-            >
-              How It Works
-            </Link>
-            <Link
-              href="#pricing"
-              className="hover:text-white transition-colors"
-            >
-              Pricing
+              Upload Docs
             </Link>
           </nav>
 
           <div className="flex items-center gap-4">
+            {isLoggedIn && (
+              <Link
+                href="/upload"
+                className="hidden sm:inline-flex h-9 items-center justify-center rounded-lg bg-violet-600 px-4 text-xs font-semibold text-white hover:bg-violet-500 transition-colors shadow-md shadow-violet-600/10"
+              >
+                Upload Docs
+              </Link>
+            )}
             {isLoggedIn ? (
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex flex-col text-right">
@@ -112,9 +87,7 @@ export default async function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="mx-auto max-w-7xl px-6 py-20 relative z-10 flex flex-col items-center">
-        {/* Hero Section */}
         <section className="text-center max-w-3xl flex flex-col items-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/5 px-3 py-1 text-xs font-semibold text-violet-400 mb-8 backdrop-blur-sm animate-pulse">
             <span className="flex h-1.5 w-1.5 rounded-full bg-violet-400" />
@@ -145,14 +118,12 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Mock UI Showcase */}
         <section
           id="preview"
           className="mt-20 w-full max-w-5xl rounded-2xl border border-white/10 bg-zinc-900/40 p-4 shadow-2xl backdrop-blur-md relative overflow-hidden group"
         >
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/20 to-zinc-950 pointer-events-none" />
 
-          {/* Top window bar decoration */}
           <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
             <div className="flex gap-1.5">
               <span className="h-3 w-3 rounded-full bg-red-500/40" />
@@ -166,7 +137,6 @@ export default async function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 min-h-[420px]">
-            {/* Sidebar Mockup */}
             <div className="border border-white/5 rounded-xl bg-zinc-950/50 p-4 flex flex-col gap-4 text-xs">
               <div className="font-semibold text-zinc-400 uppercase tracking-wider text-[10px]">
                 Sources Indexed
@@ -252,7 +222,6 @@ export default async function Home() {
                   </div>
                 </div>
 
-                {/* AI response */}
                 <div className="flex items-start gap-3">
                   <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center font-bold text-[10px] text-white">
                     AI
@@ -273,11 +242,11 @@ export default async function Home() {
                       </p>
                       <pre className="text-xs bg-zinc-950/80 border border-white/5 p-3 rounded-lg font-mono text-cyan-300 overflow-x-auto">
                         {`model Session {
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId]...)
-}`}
+                          sessionToken String   @unique
+                          userId       String
+                          expires      DateTime
+                          user         User     @relation(fields: [userId]...)
+                        }`}
                       </pre>
                     </div>
 
@@ -297,7 +266,6 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Chat Input Mockup */}
               <div className="mt-6 flex gap-2">
                 <input
                   type="text"
