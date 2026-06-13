@@ -3,10 +3,9 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
-import Image from "next/image";
 import { LogoWithText } from "@/app/components/Logo";
 import Footer from "../components/Footer";
-import { uploadFile } from "@/app/actions/upload";
+import { processFile } from "@/app/actions/upload";
 
 interface StagedFile {
   id: string;
@@ -17,6 +16,7 @@ interface StagedFile {
   status: "idle" | "uploading" | "processing" | "success" | "error";
   errorMsg?: string;
   fileObj: File;
+  chunksCount?: number;
 }
 
 export default function UploadPage() {
@@ -114,7 +114,7 @@ export default function UploadPage() {
         const formData = new FormData();
         formData.append("file", file.fileObj);
 
-        await uploadFile(formData);
+        const result = await processFile(formData);
 
         clearInterval(progressInterval);
 
@@ -122,7 +122,12 @@ export default function UploadPage() {
         setFiles((prev) =>
           prev.map((f) =>
             f.id === file.id
-              ? { ...f, status: "processing", progress: 100 }
+              ? {
+                  ...f,
+                  status: "processing",
+                  progress: 100,
+                  chunksCount: result?.chunksCount,
+                }
               : f,
           ),
         );
@@ -324,6 +329,8 @@ export default function UploadPage() {
                           </p>
                           <p className="text-xs text-zinc-500 mt-0.5">
                             {formatBytes(file.size)}
+                            {file.chunksCount !== undefined &&
+                              ` • ${file.chunksCount} chunks`}
                           </p>
                         </div>
                       </div>
