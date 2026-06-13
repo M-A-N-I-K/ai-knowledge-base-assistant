@@ -202,16 +202,16 @@ This project will cover:
 
 ### Document Upload
 
-- [ ] Upload PDF
-- [ ] Upload DOCX
-- [ ] Upload Markdown Files
+- [x] Upload PDF
+- [x] Upload DOCX
+- [x] Upload Markdown Files
 
 ### Processing Pipeline
 
-- [ ] Extract Text
-- [ ] Chunk Documents
-- [ ] Generate Embeddings
-- [ ] Store Vectors
+- [x] Extract Text
+- [x] Chunk Documents
+- [x] Generate Embeddings
+- [x] Store Vectors
 
 ### Chat
 

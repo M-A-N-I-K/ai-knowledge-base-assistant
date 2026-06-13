@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import { LogoWithText } from "@/app/components/Logo";
 import Footer from "../components/Footer";
-import { processFile } from "@/app/actions/upload";
+import { processFile } from "@/app/actions/process-file";
 
 interface StagedFile {
   id: string;

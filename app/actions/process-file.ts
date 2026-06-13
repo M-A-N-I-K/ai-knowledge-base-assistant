@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { PDFParse } from "pdf-parse";
+import { parseOffice } from "officeparser";
 
 import { GoogleGenAI } from "@google/genai";
 import { Prisma } from "@prisma/client";
@@ -33,7 +34,6 @@ async function bulkInsertDocuments(
 export async function processFile(formData: FormData) {
   const file = formData.get("file") as File;
   const arrayBuffer = await file.arrayBuffer();
-  const fileBuffer = Buffer.from(arrayBuffer.slice(0));
   const buffer = new Uint8Array(arrayBuffer);
 
   let text = "";
@@ -41,7 +41,8 @@ export async function processFile(formData: FormData) {
     const parser = new PDFParse({ data: buffer });
     text = (await parser.getText()).text;
   } else {
-    return { success: false, fileName: file.name, chunksCount: 0 };
+    const ast = await parseOffice(buffer);
+    text = (await ast.to("md")).value;
   }
 
   // Split file into chunks

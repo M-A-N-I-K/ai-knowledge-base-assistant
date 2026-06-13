@@ -1,7 +1,8 @@
 allowBuilds:
-  '@google/genai': set this to true or false
-  '@prisma/engines': true
+  "@google/genai": true
+  "@prisma/engines": true
   prisma: true
-  protobufjs: set this to true or false
+  protobufjs: false
   sharp: true
+  tesseract.js: false
   unrs-resolver: false
