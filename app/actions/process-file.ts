@@ -31,9 +31,39 @@ async function bulkInsertDocuments(
   `;
 }
 
+const checkFileEmbedded = async (fileName: string) => {
+  try {
+    const embedding = await prisma.documents.findFirst({
+      where: { sourceFile: fileName },
+    });
+    if (embedding) {
+      const chunkCount = await prisma.documents.count({
+        where: { sourceFile: fileName },
+      });
+      return { success: true, chunks: chunkCount };
+    }
+    return { success: false, chunks: 0 };
+  } catch (err) {
+    console.log("ERR CHECK FILE", err);
+    return { success: false, chunks: 0 };
+  }
+};
+
 export async function processFile(formData: FormData) {
+  // TODO : Add Only authenticated users to upload
   const file = formData.get("file") as File;
+  const fileEmbedded = await checkFileEmbedded(file.name);
+
+  if (fileEmbedded?.success) {
+    return {
+      success: true,
+      fileName: file.name,
+      chunksCount: fileEmbedded.chunks,
+    };
+  }
+
   const arrayBuffer = await file.arrayBuffer();
+  const fileBuffer = Buffer.from(arrayBuffer.slice(0));
   const buffer = new Uint8Array(arrayBuffer);
 
   let text = "";
@@ -67,9 +97,9 @@ export async function processFile(formData: FormData) {
     (r) => r.embeddings?.[0]?.values ?? [],
   );
 
-  // Insert into pgvector
   await bulkInsertDocuments(chunks, documentEmbeddings, file.name);
 
+  // TODO : Upload to object storage instead of storing locally
   const uploadDir = "./public/uploads";
   await fs.mkdir(uploadDir, { recursive: true });
   await fs.writeFile(path.join(uploadDir, file.name), fileBuffer);

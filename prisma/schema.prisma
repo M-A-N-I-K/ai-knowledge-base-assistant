@@ -71,9 +71,11 @@ model Authenticator {
 }
 
 model documents {
-  id        Int                       @id @default(autoincrement())
-  content   String?
-  embedding Unsupported("vector(768)")?
+  id         Int                    @id @default(autoincrement())
+  content    String?
+  embedding  Unsupported("vector")?
   sourceFile String?
-  createdAt DateTime                  @default(now())
+  createdAt  DateTime               @default(now())
+
+  @@index([embedding], map: "documents_embedding_hnsw_idx")
 }

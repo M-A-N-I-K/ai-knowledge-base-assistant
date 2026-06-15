@@ -429,6 +429,26 @@ export default function UploadPage() {
                 ))}
               </div>
 
+              {files.length > 0 && !isProcessing && files.every((f) => f.status === "success" || f.status === "error") && files.some((f) => f.status === "success") && (
+                <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-sm text-green-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in mb-3 backdrop-blur-sm">
+                  <div className="flex items-start gap-2.5">
+                    <svg className="w-5 h-5 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-white">Knowledge Base Synced successfully!</p>
+                      <p className="text-xs text-zinc-400 mt-0.5">All staged documents have been vectorized, chunked, and stored.</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/chat"
+                    className="inline-flex h-9 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 text-xs font-bold text-white hover:from-violet-500 hover:to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md shadow-violet-500/10 flex-shrink-0"
+                  >
+                    Go to Chat Assistant →
+                  </Link>
+                </div>
+              )}
+
               <div className="pt-2">
                 <button
                   onClick={startUpload}
