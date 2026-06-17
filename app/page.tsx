@@ -34,9 +34,14 @@ export default async function Home() {
             >
               Features
             </Link>
-          </nav>
-
-          <div className="flex items-center gap-4">
+            {isLoggedIn && (
+              <Link
+                href="/chat"
+                className="hidden sm:inline-flex h-9 items-center justify-center rounded-lg bg-violet-600 px-4 text-xs font-semibold text-white hover:bg-violet-500 transition-colors shadow-md shadow-violet-600/10"
+              >
+                Chat With Docs
+              </Link>
+            )}
             {isLoggedIn && (
               <Link
                 href="/upload"
@@ -45,6 +50,9 @@ export default async function Home() {
                 Upload Docs
               </Link>
             )}
+          </nav>
+
+          <div className="flex items-center gap-4">
             {isLoggedIn ? (
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex flex-col text-right">

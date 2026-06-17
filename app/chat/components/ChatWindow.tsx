@@ -1,9 +1,31 @@
 "use client";
 
-import { KeyboardEvent, RefObject } from "react";
+import { KeyboardEvent, RefObject, useState, useEffect } from "react";
 import Image from "next/image";
 import { Session } from "next-auth";
+import { remark } from "remark";
+import remarkHtml from "remark-html";
 import { Suggestion, MessageSource } from "../../actions/chat";
+
+function MarkdownContent({ content }: { content: string }) {
+  const [html, setHtml] = useState("");
+
+  useEffect(() => {
+    remark()
+      .use(remarkHtml, { sanitize: false })
+      .process(content)
+      .then((file) => setHtml(String(file)));
+  }, [content]);
+
+  if (!html) return <span className="whitespace-pre-line">{content}</span>;
+
+  return (
+    <div
+      className="markdown-body"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
 
 export interface ChatMessageData {
   id: string;
@@ -135,9 +157,11 @@ export function ChatWindow({
                           : "bg-zinc-900/60 border-white/5 text-zinc-300 rounded-tl-none"
                       }`}
                     >
-                      <div className="space-y-2 whitespace-pre-line">
-                        {msg.content}
-                      </div>
+                      {msg.role === "assistant" ? (
+                        <MarkdownContent content={msg.content} />
+                      ) : (
+                        <div className="whitespace-pre-line">{msg.content}</div>
+                      )}
                     </div>
 
                     {msg.role === "assistant" && msg.sources && (Array.isArray(msg.sources) ? msg.sources : JSON.parse(msg.sources || "[]")).length > 0 && (
