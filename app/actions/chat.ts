@@ -65,7 +65,9 @@ Return ONLY a valid JSON array with no markdown fences:
   }
 }
 
-export async function getChatSessions(sessionIds?: string[]): Promise<ChatSessionSummary[]> {
+export async function getChatSessions(
+  sessionIds?: string[],
+): Promise<ChatSessionSummary[]> {
   const userId = await getAuthUserId();
   if (userId) {
     return prisma.chatSession.findMany({
@@ -143,7 +145,7 @@ export async function askKnowledgeBase(
     LIMIT 3
   `;
 
-  const MAX_CONTEXT = 2000;
+  const MAX_CONTEXT = 4000;
   const rawContext = hits
     .map((h) => h.content)
     .join("\n\n---\n\n")
@@ -153,6 +155,8 @@ export async function askKnowledgeBase(
     rawContext.length > MAX_CONTEXT
       ? rawContext.slice(0, MAX_CONTEXT) + "…"
       : rawContext;
+
+  console.log("CONTEXT", context);
 
   const uniqueFiles = [
     ...new Set(hits.map((h) => h.sourceFile).filter(Boolean)),
@@ -169,7 +173,7 @@ export async function askKnowledgeBase(
       model: "gemini-2.5-flash",
       contents: `You are a concise AI assistant for a knowledge base.
 
-      Answer in 3-5 sentences using ONLY the provided context.
+      Answer in 5-10 sentences using ONLY the provided context.
       If the answer is not in the context, say so.
 
       Context:
@@ -201,7 +205,12 @@ export async function askKnowledgeBase(
     await prisma.chatMessage.createMany({
       data: [
         { sessionId, role: "user", content: question },
-        { sessionId, role: "assistant", content, sources: sources as Prisma.InputJsonValue },
+        {
+          sessionId,
+          role: "assistant",
+          content,
+          sources: sources as Prisma.InputJsonValue,
+        },
       ],
     });
 
@@ -210,9 +219,12 @@ export async function askKnowledgeBase(
       select: { title: true },
     });
 
-    const updateData: { updatedAt: Date; title?: string } = { updatedAt: new Date() };
+    const updateData: { updatedAt: Date; title?: string } = {
+      updatedAt: new Date(),
+    };
     if (session && (session.title === "New Chat" || session.title === "")) {
-      updateData.title = question.slice(0, 40) + (question.length > 40 ? "..." : "");
+      updateData.title =
+        question.slice(0, 40) + (question.length > 40 ? "..." : "");
     }
 
     await prisma.chatSession.update({

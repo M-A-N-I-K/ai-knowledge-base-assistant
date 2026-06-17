@@ -5,7 +5,7 @@ import path from "node:path";
 import { PDFParse } from "pdf-parse";
 import { parseOffice } from "officeparser";
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ApiError } from "@google/genai";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
@@ -13,6 +13,43 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 const embeddings = new GoogleGenAI({});
+
+// Free tier: 100 req/min. Stay under with batch size of 80, wait 62 s between batches.
+const EMBED_BATCH_SIZE = 80;
+const EMBED_BATCH_DELAY_MS = 62_000;
+
+async function embedChunk(chunk: string): Promise<number[]> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const res = await embeddings.models.embedContent({
+        model: "gemini-embedding-2",
+        contents: chunk,
+        config: { outputDimensionality: 768 },
+      });
+      return res.embeddings?.[0]?.values ?? [];
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429 && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 15_000));
+        continue;
+      }
+      throw err;
+    }
+  }
+  return [];
+}
+
+async function embedChunks(chunks: string[]): Promise<number[][]> {
+  const results: number[][] = [];
+  for (let i = 0; i < chunks.length; i += EMBED_BATCH_SIZE) {
+    const batch = chunks.slice(i, i + EMBED_BATCH_SIZE);
+    const batchResults = await Promise.all(batch.map(embedChunk));
+    results.push(...batchResults);
+    if (i + EMBED_BATCH_SIZE < chunks.length) {
+      await new Promise((r) => setTimeout(r, EMBED_BATCH_DELAY_MS));
+    }
+  }
+  return results;
+}
 
 async function bulkInsertDocuments(
   chunks: string[],
@@ -90,20 +127,7 @@ export async function processFile(
   });
   const chunks = await splitter.splitText(text);
 
-  // Create vector embeddings of those chunks with 768 dimensions
-  const responses = await Promise.all(
-    chunks.map((chunk) =>
-      embeddings.models.embedContent({
-        model: "gemini-embedding-2-preview",
-        contents: chunk,
-        config: { outputDimensionality: 768 },
-      }),
-    ),
-  );
-
-  const documentEmbeddings = responses.map(
-    (r) => r.embeddings?.[0]?.values ?? [],
-  );
+  const documentEmbeddings = await embedChunks(chunks);
 
   await bulkInsertDocuments(chunks, documentEmbeddings, file.name);
 
