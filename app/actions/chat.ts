@@ -4,9 +4,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ApiError } from "@google/genai";
 
-const genai = new GoogleGenAI({});
+const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export type Source = { name: string; chunks: number };
 export type Suggestion = { title: string; desc: string; prompt: string };
@@ -23,7 +23,6 @@ async function getAuthUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
-// Distinct source files that have been embedded into the documents table
 export async function getEmbeddedSources(): Promise<Source[]> {
   const rows = await prisma.$queryRaw<{ sourceFile: string; chunks: bigint }[]>`
     SELECT "sourceFile", COUNT(*) AS chunks
@@ -50,7 +49,7 @@ export async function generateSuggestions(
   }
 
   const res = await genai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-2.0-flash-lite",
     contents: `Generate exactly 3 helpful question suggestions for a knowledge base containing these files: ${sourceNames.join(", ")}.
 Return ONLY a valid JSON array with no markdown fences:
 [{"title":"Max 5 words","desc":"One line under 10 words","prompt":"Full question to send"}]`,
@@ -92,7 +91,6 @@ export async function askKnowledgeBase(
   question: string,
   sessionId: string | null,
 ): Promise<{ content: string; sources: MessageSource[] }> {
-  // 1. Embed query
   const embedRes = await genai.models.embedContent({
     model: "gemini-embedding-2-preview",
     contents: question,
@@ -107,18 +105,28 @@ export async function askKnowledgeBase(
     };
   }
 
-  // 2. Vector similarity search (top 5 chunks)
   const vecStr = `[${vec.join(",")}]`;
   const hits = await prisma.$queryRaw<
     { content: string; sourceFile: string | null }[]
   >`
     SELECT content, "sourceFile"
     FROM "documents"
+    WHERE embedding <=> ${vecStr}::vector(768) < 0.4
     ORDER BY embedding <=> ${vecStr}::vector(768)
-    LIMIT 5
+    LIMIT 3
   `;
 
-  const context = hits.map((h) => h.content).join("\n\n---\n\n");
+  const MAX_CONTEXT = 2000;
+  const rawContext = hits
+    .map((h) => h.content)
+    .join("\n\n---\n\n")
+    .replace(/\s+/g, " ")
+    .trim();
+  const context =
+    rawContext.length > MAX_CONTEXT
+      ? rawContext.slice(0, MAX_CONTEXT) + "…"
+      : rawContext;
+
   const uniqueFiles = [
     ...new Set(hits.map((h) => h.sourceFile).filter(Boolean)),
   ] as string[];
@@ -127,21 +135,41 @@ export async function askKnowledgeBase(
     location: "",
   }));
 
-  // 3. Generate grounded answer
-  const answerRes = await genai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: `You are a helpful AI assistant for a knowledge base. Answer using only the context provided.
-If the context does not contain a clear answer, say so honestly.
+  let answerRes;
 
-Context:
-${context || "No relevant documents found."}
+  try {
+    answerRes = await genai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: `You are a concise AI assistant for a knowledge base.
 
-Question: ${question}`,
-  });
+      Answer in 3-5 sentences using ONLY the provided context.
+      If the answer is not in the context, say so.
+
+      Context:
+      ${context || "No relevant documents found."}
+
+      Question:
+      ${question}`,
+    });
+  } catch (err) {
+    console.error("Gemini Error:", err);
+
+    if (err instanceof ApiError && err.status === 429) {
+      return {
+        content:
+          "Rate limit exceeded. Please wait a few seconds and try again.",
+        sources,
+      };
+    }
+
+    return {
+      content: "AI service temporarily unavailable.",
+      sources,
+    };
+  }
 
   const content = answerRes.text ?? "Unable to generate a response.";
 
-  // 4. Persist to DB if a session is open
   if (sessionId) {
     await prisma.chatMessage.createMany({
       data: [

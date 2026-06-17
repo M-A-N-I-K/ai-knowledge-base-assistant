@@ -77,7 +77,7 @@ export async function processFile(formData: FormData) {
 
   // Split file into chunks
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 500,
+    chunkSize: 200,
     chunkOverlap: 10,
   });
   const chunks = await splitter.splitText(text);
