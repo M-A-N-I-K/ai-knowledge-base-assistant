@@ -114,7 +114,7 @@ export default function UploadPage() {
         const formData = new FormData();
         formData.append("file", file.fileObj);
 
-        const result = await processFile(formData);
+        const result = await processFile(formData, chunkSize, chunkOverlap);
 
         clearInterval(progressInterval);
 
@@ -139,18 +139,17 @@ export default function UploadPage() {
         setFiles((prev) =>
           prev.map((f) => (f.id === file.id ? { ...f, status: "success" } : f)),
         );
-      } catch (err: any) {
+      } catch (err: unknown) {
         clearInterval(progressInterval);
-        console.error("ERROR UPLOADING FILE", file.name, err);
+        const message =
+          err instanceof Error && err.message === "UNAUTHORIZED"
+            ? "Sign in to upload documents"
+            : err instanceof Error
+              ? err.message
+              : "Upload failed";
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === file.id
-              ? {
-                  ...f,
-                  status: "error",
-                  errorMsg: err.message || "Upload failed",
-                }
-              : f,
+            f.id === file.id ? { ...f, status: "error", errorMsg: message } : f,
           ),
         );
       }
@@ -429,36 +428,78 @@ export default function UploadPage() {
                 ))}
               </div>
 
-              {files.length > 0 && !isProcessing && files.every((f) => f.status === "success" || f.status === "error") && files.some((f) => f.status === "success") && (
-                <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-sm text-green-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in mb-3 backdrop-blur-sm">
-                  <div className="flex items-start gap-2.5">
-                    <svg className="w-5 h-5 text-green-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <p className="font-semibold text-white">Knowledge Base Synced successfully!</p>
-                      <p className="text-xs text-zinc-400 mt-0.5">All staged documents have been vectorized, chunked, and stored.</p>
+              {files.length > 0 &&
+                !isProcessing &&
+                files.every(
+                  (f) => f.status === "success" || f.status === "error",
+                ) &&
+                files.some((f) => f.status === "success") && (
+                  <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 text-sm text-green-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in mb-3 backdrop-blur-sm">
+                    <div className="flex items-start gap-2.5">
+                      <svg
+                        className="w-5 h-5 text-green-400 mt-0.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <div>
+                        <p className="font-semibold text-white">
+                          Knowledge Base Synced successfully!
+                        </p>
+                        <p className="text-xs text-zinc-400 mt-0.5">
+                          All staged documents have been vectorized, chunked,
+                          and stored.
+                        </p>
+                      </div>
                     </div>
+                    <Link
+                      href="/chat"
+                      className="inline-flex h-9 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 text-xs font-bold text-white hover:from-violet-500 hover:to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md shadow-violet-500/10 flex-shrink-0"
+                    >
+                      Go to Chat Assistant →
+                    </Link>
                   </div>
-                  <Link
-                    href="/chat"
-                    className="inline-flex h-9 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 text-xs font-bold text-white hover:from-violet-500 hover:to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md shadow-violet-500/10 flex-shrink-0"
-                  >
-                    Go to Chat Assistant →
-                  </Link>
-                </div>
-              )}
+                )}
 
               <div className="pt-2">
-                <button
-                  onClick={startUpload}
-                  disabled={isProcessing}
-                  className="w-full flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 font-semibold text-white shadow-lg shadow-violet-600/20 hover:from-violet-500 hover:to-cyan-500 hover:shadow-violet-600/30 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none transition-all"
-                >
-                  {isProcessing
-                    ? "Processing Knowledge Base..."
-                    : `Process ${files.length} Staged Document${files.length > 1 ? "s" : ""}`}
-                </button>
+                {!session ? (
+                  <Link
+                    href="/auth/signin"
+                    className="w-full flex h-12 items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/5 font-semibold text-sm text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 transition-all"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                    Sign in to Process Documents
+                  </Link>
+                ) : (
+                  <button
+                    onClick={startUpload}
+                    disabled={isProcessing}
+                    className="w-full flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 font-semibold text-white shadow-lg shadow-violet-600/20 hover:from-violet-500 hover:to-cyan-500 hover:shadow-violet-600/30 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none transition-all"
+                  >
+                    {isProcessing
+                      ? "Processing Knowledge Base..."
+                      : `Process ${files.length} Staged Document${files.length > 1 ? "s" : ""}`}
+                  </button>
+                )}
               </div>
             </div>
           )}

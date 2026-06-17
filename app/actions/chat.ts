@@ -49,7 +49,7 @@ export async function generateSuggestions(
   }
 
   const res = await genai.models.generateContent({
-    model: "gemini-2.0-flash-lite",
+    model: "gemini-2.5-flash-lite",
     contents: `Generate exactly 3 helpful question suggestions for a knowledge base containing these files: ${sourceNames.join(", ")}.
 Return ONLY a valid JSON array with no markdown fences:
 [{"title":"Max 5 words","desc":"One line under 10 words","prompt":"Full question to send"}]`,
@@ -65,15 +65,24 @@ Return ONLY a valid JSON array with no markdown fences:
   }
 }
 
-export async function getChatSessions(): Promise<ChatSessionSummary[]> {
+export async function getChatSessions(sessionIds?: string[]): Promise<ChatSessionSummary[]> {
   const userId = await getAuthUserId();
-  if (!userId) return [];
-  return prisma.chatSession.findMany({
-    where: { userId },
-    orderBy: { updatedAt: "desc" },
-    take: 20,
-    select: { id: true, title: true, createdAt: true },
-  });
+  if (userId) {
+    return prisma.chatSession.findMany({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+      take: 30,
+      select: { id: true, title: true, createdAt: true },
+    });
+  } else if (sessionIds && sessionIds.length > 0) {
+    return prisma.chatSession.findMany({
+      where: { id: { in: sessionIds } },
+      orderBy: { updatedAt: "desc" },
+      take: 30,
+      select: { id: true, title: true, createdAt: true },
+    });
+  }
+  return [];
 }
 
 export async function createChatSession(
@@ -83,6 +92,23 @@ export async function createChatSession(
   return prisma.chatSession.create({
     data: { title: title.slice(0, 80), userId },
     select: { id: true },
+  });
+}
+
+export async function getChatSessionDetails(id: string) {
+  return prisma.chatSession.findUnique({
+    where: { id },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+}
+
+export async function deleteChatSession(id: string) {
+  return prisma.chatSession.delete({
+    where: { id },
   });
 }
 
@@ -96,6 +122,7 @@ export async function askKnowledgeBase(
     contents: question,
     config: { outputDimensionality: 768 },
   });
+
   const vec = embedRes.embeddings?.[0]?.values ?? [];
 
   if (vec.length === 0) {
@@ -139,7 +166,7 @@ export async function askKnowledgeBase(
 
   try {
     answerRes = await genai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       contents: `You are a concise AI assistant for a knowledge base.
 
       Answer in 3-5 sentences using ONLY the provided context.
@@ -174,12 +201,23 @@ export async function askKnowledgeBase(
     await prisma.chatMessage.createMany({
       data: [
         { sessionId, role: "user", content: question },
-        { sessionId, role: "assistant", content, sources },
+        { sessionId, role: "assistant", content, sources: sources as Prisma.InputJsonValue },
       ],
     });
+
+    const session = await prisma.chatSession.findUnique({
+      where: { id: sessionId },
+      select: { title: true },
+    });
+
+    const updateData: { updatedAt: Date; title?: string } = { updatedAt: new Date() };
+    if (session && (session.title === "New Chat" || session.title === "")) {
+      updateData.title = question.slice(0, 40) + (question.length > 40 ? "..." : "");
+    }
+
     await prisma.chatSession.update({
       where: { id: sessionId },
-      data: { updatedAt: new Date() },
+      data: updateData,
     });
   }
 

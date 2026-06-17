@@ -9,6 +9,8 @@ import { GoogleGenAI } from "@google/genai";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const embeddings = new GoogleGenAI({});
 
@@ -49,8 +51,14 @@ const checkFileEmbedded = async (fileName: string) => {
   }
 };
 
-export async function processFile(formData: FormData) {
-  // TODO : Add Only authenticated users to upload
+export async function processFile(
+  formData: FormData,
+  chunkSize: number,
+  chunkOverlap: number,
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) throw new Error("UNAUTHORIZED");
+
   const file = formData.get("file") as File;
   const fileEmbedded = await checkFileEmbedded(file.name);
 
@@ -77,8 +85,8 @@ export async function processFile(formData: FormData) {
 
   // Split file into chunks
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 200,
-    chunkOverlap: 10,
+    chunkSize: chunkSize,
+    chunkOverlap: chunkOverlap,
   });
   const chunks = await splitter.splitText(text);
 

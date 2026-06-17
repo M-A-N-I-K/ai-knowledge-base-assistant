@@ -34,12 +34,6 @@ export default async function Home() {
             >
               Features
             </Link>
-            <Link
-              href="/upload"
-              className="hover:text-white transition-colors text-violet-400 font-semibold"
-            >
-              Upload Docs
-            </Link>
           </nav>
 
           <div className="flex items-center gap-4">

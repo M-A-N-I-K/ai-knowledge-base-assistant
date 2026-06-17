@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ["pdf-parse", "pdfjs-dist", "officeparser"],
+  images: {
+    remotePatterns: [
+      new URL("https://lh3.googleusercontent.com/**"),
+    ],
+  },
 };
 
 export default nextConfig;
