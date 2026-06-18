@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatWindow, ChatMessageData } from "./ChatWindow";
 import {
@@ -13,9 +14,6 @@ import {
   getChatSessionDetails,
   deleteChatSession,
   askKnowledgeBase,
-  Source,
-  Suggestion,
-  ChatSessionSummary,
   MessageSource,
 } from "../../actions/chat";
 
@@ -23,13 +21,38 @@ interface ChatWorkspaceProps {
   sessionId?: string;
 }
 
+// Reads guest session IDs from localStorage (client-only)
+function getGuestSessionIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(
+      localStorage.getItem("kb_assistant_guest_sessions") || "[]",
+    );
+  } catch {
+    return [];
+  }
+}
+
+function addGuestSessionId(id: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const ids = getGuestSessionIds();
+    if (!ids.includes(id)) {
+      localStorage.setItem(
+        "kb_assistant_guest_sessions",
+        JSON.stringify([...ids, id]),
+      );
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const [sources, setSources] = useState<Source[]>([]);
-  const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [messages, setMessages] = useState<ChatMessageData[]>([]);
   const [input, setInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -37,96 +60,49 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
   const [indexWorkspace, setIndexWorkspace] = useState("main-kb");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 1. Initial Load: Sources & Suggestions & Session List
+  const { data: sources = [] } = useQuery({
+    queryKey: ["sources"],
+    queryFn: getEmbeddedSources,
+  });
+
+  const { data: suggestions = [] } = useQuery({
+    queryKey: ["suggestions", sources.map((s) => s.name)],
+    queryFn: () => generateSuggestions(sources.map((s) => s.name)),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: sessions = [] } = useQuery({
+    queryKey: ["sessions", session?.user?.email ?? "guest"],
+    queryFn: () => getChatSessions(getGuestSessionIds()),
+  });
+
+  const { data: sessionDetails } = useQuery({
+    queryKey: ["session", sessionId],
+    queryFn: () => getChatSessionDetails(sessionId),
+    enabled: !!sessionId,
+  });
+
   useEffect(() => {
-    async function loadInitialData() {
-      try {
-        const activeSources = await getEmbeddedSources();
-        setSources(activeSources);
-
-        const activeSuggestions = await generateSuggestions(
-          activeSources.map((s) => s.name),
-        );
-        setSuggestions(activeSuggestions);
-
-        await refreshSessionsList();
-      } catch (err) {
-        console.error("Error loading initial chat data:", err);
-      }
-    }
-    loadInitialData();
-  }, [session]);
-
-  // 2. Load message history when sessionId changes
-  useEffect(() => {
-    if (sessionId) {
-      async function loadSessionDetails() {
-        try {
-          const details = await getChatSessionDetails(sessionId);
-          if (details) {
-            setMessages(
-              details.messages.map((m) => ({
-                id: m.id,
-                role: m.role as "user" | "assistant",
-                content: m.content,
-                createdAt: m.createdAt,
-                sources: m.sources,
-              })),
-            );
-          } else {
-            // Session not found, redirect to root chat
-            router.push("/chat");
-          }
-        } catch (err) {
-          console.error("Error loading session details:", err);
-          router.push("/chat");
-        }
-      }
-      loadSessionDetails();
-    } else {
+    if (sessionDetails) {
+      setMessages(
+        sessionDetails.messages.map((m) => ({
+          id: m.id,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+          createdAt: m.createdAt,
+          sources: m.sources as MessageSource[] | null,
+        })),
+      );
+    } else if (!sessionId) {
       setMessages([]);
     }
-  }, [sessionId]);
+  }, [sessionDetails, sessionId]);
 
-  // 3. Scroll to bottom when messages change or loading
+  // ── Scroll to bottom ──────────────────────────────────────────────────────
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSearching, isTyping]);
-
-  // Helper: Retrieve guest sessions list from localStorage
-  const getGuestSessionIds = (): string[] => {
-    if (typeof window === "undefined") return [];
-    try {
-      return JSON.parse(localStorage.getItem("kb_assistant_guest_sessions") || "[]");
-    } catch {
-      return [];
-    }
-  };
-
-  // Helper: Save guest session ID to localStorage
-  const addGuestSessionId = (id: string) => {
-    if (typeof window === "undefined") return;
-    try {
-      const ids = getGuestSessionIds();
-      if (!ids.includes(id)) {
-        ids.push(id);
-        localStorage.setItem("kb_assistant_guest_sessions", JSON.stringify(ids));
-      }
-    } catch (err) {
-      console.error("LocalStorage error:", err);
-    }
-  };
-
-  // Helper: Refresh session list
-  const refreshSessionsList = async () => {
-    try {
-      const guestIds = getGuestSessionIds();
-      const list = await getChatSessions(guestIds);
-      setSessions(list);
-    } catch (err) {
-      console.error("Error updating session list:", err);
-    }
-  };
 
   // Stream simulation (character by character)
   const streamResponse = (text: string, citationSources: MessageSource[]) => {
@@ -140,10 +116,7 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
       setMessages((prev) => {
         const lastMsg = prev[prev.length - 1];
         if (lastMsg && lastMsg.role === "assistant") {
-          return [
-            ...prev.slice(0, -1),
-            { ...lastMsg, content: currentText },
-          ];
+          return [...prev.slice(0, -1), { ...lastMsg, content: currentText }];
         } else {
           return [
             ...prev,
@@ -195,11 +168,10 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
 
       const response = await askKnowledgeBase(textToSend, activeId);
       setIsSearching(false);
-      
-      // Update sidebar session summaries
-      await refreshSessionsList();
 
-      // Stream the Gemini response
+      // Refresh session list in sidebar
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+
       streamResponse(response.content, response.sources);
     } catch (err) {
       console.error("Error sending message:", err);
@@ -219,13 +191,15 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
     try {
       await deleteChatSession(id);
 
-      // Remove from localStorage if guest
       if (!session) {
         const ids = getGuestSessionIds().filter((sid) => sid !== id);
-        localStorage.setItem("kb_assistant_guest_sessions", JSON.stringify(ids));
+        localStorage.setItem(
+          "kb_assistant_guest_sessions",
+          JSON.stringify(ids),
+        );
       }
 
-      await refreshSessionsList();
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
 
       if (sessionId === id) {
         router.push("/chat");
