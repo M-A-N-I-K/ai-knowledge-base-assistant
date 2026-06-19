@@ -98,18 +98,15 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
     }
   }, [sessionDetails, sessionId]);
 
-  // ── Scroll to bottom ──────────────────────────────────────────────────────
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSearching, isTyping]);
 
-  // Stream simulation (character by character)
   const streamResponse = (text: string, citationSources: MessageSource[]) => {
     setIsTyping(true);
     let currentText = "";
     let i = 0;
-    const speed = 10; // ms per char
+    const speed = 10;
 
     const interval = setInterval(() => {
       currentText += text.charAt(i);
@@ -137,7 +134,6 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
     }, speed);
   };
 
-  // Send message handler
   const handleSend = async (textToSend: string) => {
     if (!textToSend.trim()) return;
 
@@ -155,21 +151,18 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
     let activeId = sessionId;
 
     try {
-      // Create session first if on new chat
       if (!activeId) {
         const newSession = await createChatSession("New Chat");
         activeId = newSession.id;
         if (!session) {
           addGuestSessionId(activeId);
         }
-        // Redirect client dynamically to chat ID route
         router.replace(`/chat/${activeId}`);
       }
 
       const response = await askKnowledgeBase(textToSend, activeId);
       setIsSearching(false);
 
-      // Refresh session list in sidebar
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
 
       streamResponse(response.content, response.sources);
@@ -219,14 +212,11 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
 
   return (
     <div className="relative flex h-screen w-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
-      {/* Background radial glows */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-cyan-600/5 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293704_1px,transparent_1px),linear-gradient(to_bottom,#1f293704_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-40" />
 
-      {/* Reusable Sidebar */}
       <ChatSidebar
         sources={sources}
         sessions={sessions}
@@ -237,7 +227,6 @@ export function ChatWorkspace({ sessionId = "" }: ChatWorkspaceProps) {
         onDeleteSession={handleDeleteSession}
       />
 
-      {/* Reusable Window */}
       <ChatWindow
         messages={messages}
         input={input}

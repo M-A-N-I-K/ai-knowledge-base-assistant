@@ -3,14 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: "5mb",
+      bodySizeLimit: "50mb",
     },
   },
   serverExternalPackages: ["pdf-parse", "pdfjs-dist", "officeparser"],
   images: {
-    remotePatterns: [
-      new URL("https://lh3.googleusercontent.com/**"),
-    ],
+    remotePatterns: [new URL("https://lh3.googleusercontent.com/**")],
   },
 };
 
