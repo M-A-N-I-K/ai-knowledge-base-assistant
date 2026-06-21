@@ -215,10 +215,10 @@ This project will cover:
 
 ### Chat
 
-- [ ] Ask Questions
-- [ ] Retrieve Relevant Chunks
-- [ ] Generate AI Response
-- [ ] Display Citations
+- [x] Ask Questions
+- [x] Retrieve Relevant Chunks
+- [x] Generate AI Response
+- [x] Display Citations
 
 ---
 
