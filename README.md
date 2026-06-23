@@ -249,9 +249,9 @@ This project will cover:
 
 ### Chat Memory
 
-- [ ] Conversation History
+- [x] Conversation History
 - [ ] Context Preservation
-- [ ] Follow-Up Questions
+- [x] Follow-Up Questions
 
 ### LangGraph
 
