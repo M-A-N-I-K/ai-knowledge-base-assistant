@@ -45,7 +45,7 @@ LangGraph Workflow
 LLM  Retriever  Memory
  │      │
  ▼      ▼
-Gemini/Qwen  Qdrant
+Gemini/Qwen  pgvector
         │
         ▼
 Document Chunks
@@ -112,7 +112,7 @@ Future:
 
 ## Vector Database
 
-- Qdrant
+- pgvector (PostgreSQL extension)
 
 ---
 
@@ -158,11 +158,7 @@ Backend:
 
 Database:
 
-- Neon
-
-Vector DB:
-
-- Qdrant Cloud
+- Neon (Postgres + pgvector)
 
 Storage:
 
@@ -353,7 +349,7 @@ src/
 ├── lib/
 │   ├── langchain/
 │   ├── langgraph/
-│   ├── qdrant/
+│   ├── pgvector/
 │   ├── prisma/
 │   └── embeddings/
 │
